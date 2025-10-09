@@ -59,7 +59,7 @@ def save_data(data_row):
     with open(OUTPUT_FILE, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(['timestamp', 'product_name', 'store', 'price']) # Escreve o cabeçalho
+            writer.writerow(['timestamp', 'nome', 'loja', 'preço']) # Escreve o cabeçalho
         writer.writerow(data_row)
 
 def main():
@@ -76,11 +76,11 @@ def main():
     print(f"Iniciando verificação de preços em {timestamp}")
 
     for product in products:
-        print(f"Buscando: {product['product_name']} na loja {product['store']}...")
-        price = scrape_product_price(product['url'], product['price_selector'], product['render_js'])
+        print(f"Buscando: {product['nome']} na loja {product['loja']}...")
+        price = scrape_product_price(product['url'], product['seletor'], product['render_js'])
         
         if price is not None:
-            data_row = [timestamp, product['product_name'], product['store'], price]
+            data_row = [timestamp, product['nome'], product['loja'], price]
             save_data(data_row)
             print(f"  -> Preço encontrado: R$ {price:.2f}")
         else:

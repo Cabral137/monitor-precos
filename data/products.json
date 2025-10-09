@@ -1,6 +1,7 @@
 [
     {
         "nome": "Nome Produto",
+        "loja": "",
         "url": "url",
         "seletor": "",
         "render_js": ""
