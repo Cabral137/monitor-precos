@@ -1,0 +1,38 @@
+name: Monitor de Preços Diário
+
+on:
+  workflow_dispatch: # Permite rodar manualmente
+  schedule:
+    # Roda todo dia às 9h e 21h (horário UTC)
+    - cron: '0 9,21 * * *'
+
+jobs:
+  scrape-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # Adiciona cache para acelerar instalações
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Rodar o script de scraping
+        run: python src/tracker.py
+        env:
+          SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }} # Injeta o segredo
+
+      - name: Fazer commit dos novos preços
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          # Adiciona todos os arquivos na pasta data (products.json e price_history.csv)
+          git add data/*
+          # Faz o commit apenas se houver mudanças
+          git diff --staged --quiet || git commit -m "Atualiza histórico de preços - $(date)"
+          git push
