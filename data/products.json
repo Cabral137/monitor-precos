@@ -1,9 +1,9 @@
 [
   {
-    "product_name": "Mouse (teste)",
-    "store": "KaBuM",
+    "nome": "Mouse (teste)",
+    "loja": "KaBuM",
     "url": "https://www.kabum.com.br/produto/495544/mouse-gamer-sem-fio-logitech-g-pro-x-superlight-2-com-lightspeed-32000-dpi-sensor-hero-2-com-bateria-recarregavel-preto-910-006629",
-    "price_selector": "json-ld",
+    "seletor": "json-ld",
     "render_js": false
   }
 ]
