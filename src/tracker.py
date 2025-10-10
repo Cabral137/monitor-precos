@@ -19,8 +19,8 @@ def load_products():
         print(f"Erro: Arquivo de produtos '{PRODUCTS_FILE}' não encontrado.")
         return []
 
-# Usa o ScrapFly para buscar o HTML e extrai o preço de um produto
 def scrape_product_price(url: str, selector: str, render_js: bool):
+    """Usa o ScrapFly para buscar dados e extrai o preço de um produto."""
     try:
         print(f"  - Usando render_js: {render_js}")
         response = requests.get(
@@ -35,30 +35,45 @@ def scrape_product_price(url: str, selector: str, render_js: bool):
         )
         response.raise_for_status()
 
-        # --- SALVANDO O ARQUIVO DE DEBUG ---
-        output_html_file = 'scrapfly_output.html'
-        with open(output_html_file, 'w', encoding='utf-8') as f:
-            f.write(response.text)
-        print(f"  - !!! O HTML recebido pelo ScrapFly foi salvo em '{output_html_file}' !!!")
-        # -----------------------------------------------------------
+        # --- CORREÇÃO IMPORTANTE ---
+        # 1. Analisa a resposta completa do ScrapFly como JSON
+        api_response = response.json()
+        # 2. Pega o conteúdo HTML de dentro do JSON
+        html_content = api_response['result']['content']
+        # -------------------------
         
-        html_content = response.content
+        # 3. Agora o BeautifulSoup analisa apenas o HTML correto
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        price_element = soup.select_one(selector)
-        
-        if not price_element:
-            print(f"  - ERRO: Seletor CSS '{selector}' não encontrado no HTML recebido.")
-            return None
+        if selector == "json-ld":
+            script_tag = soup.find('script', {'type': 'application/ld+json'})
+            if not script_tag:
+                print("  - ERRO: Tag de script JSON-LD não encontrada.")
+                return None
+            
+            json_data = json.loads(script_tag.string)
+            price_str = json_data.get('offers', {}).get('price')
+            
+            if price_str:
+                return float(price_str)
+            else:
+                print("  - ERRO: Chave 'price' não encontrada no JSON-LD.")
+                return None
+        else:
+            # Esta parte continua aqui para ser usada com outras lojas no futuro
+            price_element = soup.select_one(selector)
+            if not price_element:
+                print(f"  - ERRO: Seletor CSS '{selector}' não encontrado.")
+                return None
 
-        price_text = price_element.get_text(strip=True)
-        price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
-        return float(price_clean)
+            price_text = price_element.get_text(strip=True)
+            price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
+            return float(price_clean)
 
     except requests.exceptions.RequestException as e:
         print(f"  - ERRO de requisição para {url}: {e}")
         return None
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError, json.JSONDecodeError, KeyError) as e:
         print(f"  - ERRO ao processar o dado para {url}: {e}")
         return None
 
