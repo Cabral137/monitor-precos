@@ -1,10 +1,14 @@
+# .github/workflows/price_tracker.yml
+
 name: Monitor de Preços Diário
 
 on:
-  workflow_dispatch: # Permite rodar manualmente
+  workflow_dispatch:
   schedule:
-    # Roda todo dia às 9h e 21h (horário UTC)
     - cron: '0 9,21 * * *'
+
+permissions:
+  contents: write
 
 jobs:
   scrape-prices:
@@ -17,15 +21,25 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip' # Adiciona cache para acelerar instalações
+          cache: 'pip'
 
       - name: Instalar dependências
         run: pip install -r requirements.txt
 
       - name: Rodar o script de scraping
-        run: python src/tracker.py
+
+        run: python src/tracker.py || true
         env:
-          SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }} # Injeta o segredo
+          SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
+
+      # PASSO NOVO E IMPORTANTE PARA DEPURAR
+      - name: Salvar HTML de debug como Artefato
+        # Este passo só será executado se o arquivo de debug existir
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-debug-output
+          path: scrapfly_output.html
 
       - name: Fazer commit dos novos preços
         run: |

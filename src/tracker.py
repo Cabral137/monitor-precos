@@ -31,43 +31,34 @@ def scrape_product_price(url: str, selector: str, render_js: bool):
                 'render_js': render_js,
                 'country': 'br',
             },
-            timeout=60
+            timeout=90
         )
         response.raise_for_status()
+
+        # --- SALVANDO O ARQUIVO DE DEBUG ---
+        output_html_file = 'scrapfly_output.html'
+        with open(output_html_file, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+        print(f"  - !!! O HTML recebido pelo ScrapFly foi salvo em '{output_html_file}' !!!")
+        # -----------------------------------------------------------
         
         html_content = response.content
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # MÉTODO 1: JSON-LD
-        if selector == "json-ld":
-            script_tag = soup.find('script', {'type': 'application/ld+json'})
-            if not script_tag:
-                print("  - ERRO: Tag de script JSON-LD não encontrada.")
-                return None
-            
-            json_data = json.loads(script_tag.string)
-            price_str = json_data.get('offers', {}).get('price')
-            if price_str:
-                return float(price_str)
-            else:
-                print("  - ERRO: Chave 'price' não encontrada no JSON-LD.")
-                return None
+        price_element = soup.select_one(selector)
+        
+        if not price_element:
+            print(f"  - ERRO: Seletor CSS '{selector}' não encontrado no HTML recebido.")
+            return None
 
-        # MÉTODO 2: SELETOR CSS
-        else:
-            price_element = soup.select_one(selector)
-            if not price_element:
-                print(f"  - ERRO: Seletor CSS '{selector}' não encontrado.")
-                return None
-
-            price_text = price_element.get_text(strip=True)
-            price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
-            return float(price_clean)
+        price_text = price_element.get_text(strip=True)
+        price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
+        return float(price_clean)
 
     except requests.exceptions.RequestException as e:
         print(f"  - ERRO de requisição para {url}: {e}")
         return None
-    except (ValueError, TypeError, json.JSONDecodeError) as e:
+    except (ValueError, TypeError) as e:
         print(f"  - ERRO ao processar o dado para {url}: {e}")
         return None
 
