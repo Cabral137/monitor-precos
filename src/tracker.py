@@ -18,8 +18,8 @@ STORE_CONFIG = {
     "www.kabum.com.br": {
         "nome_loja": "Kabum",
         "seletor_titulo": "h1.sc-a1f7a75-1",
-        "seletor_preco": "json_ld",
-        "render_js": True
+        "seletor_preco": "json-ld",
+        "render_js": False
     },
 
     "www.amazon.com.br": {
@@ -81,7 +81,7 @@ def scrape_product (url: str, config: dict):
             if script_tag and script_tag.string:
                 json_data = json.loads(script_tag.string)
                 price_str = json_data.get('offers', {}).get('price')
-                
+
                 if price_str:
                     price = float(price_str)
 
