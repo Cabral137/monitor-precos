@@ -63,27 +63,31 @@ def scrape_product (url: str, config: dict):
         soup = BeautifulSoup(html_content, 'html.parser') # 3. BeautifulSoup analisa apenas o HTML correto
         
         # Extração do nome do produto
-        title_element = soup.select_one(config['seletor_titulo'])
-        title = title_element.get_text(strip=True) if title_element else "Título não encontrado"
+        title = "Título não encontrado" # Define um valor padrão
+        title_selector = config.get('seletor_titulo') # Pega o seletor de forma segura
+
+        if title_selector: # 1. Só continua se o seletor não for vazio
+            title_element = soup.select_one(title_selector)
+            if title_element: # 2. Só extrai o texto se o elemento foi encontrado
+                title = title_element.get_text(strip=True)
 
         # Extração do preço do produto
         price = None
+        price_selector = config.get('seletor_preco')
 
-        if config['seletor_preco'] == "json-ld": # Area com dados JSON no HTML do site
+        if price_selector == "json-ld": # Area com dados JSON no HTML do site
 
             script_tag = soup.find('script', {'type': 'application/ld+json'})
-
-            if script_tag:
+            if script_tag and script_tag.string:
                 json_data = json.loads(script_tag.string)
                 price_str = json_data.get('offers', {}).get('price')
-
+                
                 if price_str:
                     price = float(price_str)
 
-        else:
+        elif price_selector: # Se for um seletor CSS e não for vazio
 
-            price_element = soup.select_one(config['seletor_preco'])
-
+            price_element = soup.select_one(price_selector)
             if price_element:
                 price_text = price_element.get_text(strip=True)
                 price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
