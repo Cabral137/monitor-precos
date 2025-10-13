@@ -1,74 +1,95 @@
-import requests
 import os
+import csv
 import json
+import gspread
+import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-import csv
+from urllib.parse import urlparse
 
 # --- Constantes ---
 API_KEY = os.getenv("SCRAPFLY_API_KEY")
 PRODUCTS_FILE = os.path.join("data", "products.json")
 OUTPUT_FILE = os.path.join("data", "price_history.csv")
 
+# --- Dicionário ---
+STORE_CONFIG = {
+
+    "www.kabum.com.br": {
+        "nome_loja": "Kabum",
+        "seletor_titulo": "",
+        "seletor_preco": "json_ld",
+        "render_js": True
+    },
+
+    "www.amazon.com.br": {
+        "nome_loja": "Amazon",
+        "seletor_titulo": "",
+        "seletor_preco": "",
+        "render_js": True
+    }
+
+}
+
 # Carrega a lista de produtos do arquivo JSON
 def load_products():
     try:
         with open(PRODUCTS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
+        
     except FileNotFoundError:
         print(f"Erro: Arquivo de produtos '{PRODUCTS_FILE}' não encontrado.")
         return []
 
-def scrape_product_price(url: str, selector: str, render_js: bool):
-    """Usa o ScrapFly para buscar dados e extrai o preço de um produto."""
+# Usa o ScrapFly para buscar dados e extrai os dados de um produto
+def scrape_product (url: str, config: dict):
     try:
-        print(f"  - Usando render_js: {render_js}")
+        print(f"  - Usando render_js: {config['render_js']}")
         response = requests.get(
             'https://api.scrapfly.io/scrape',
             params={
                 'key': API_KEY,
                 'url': url,
-                'render_js': render_js,
+                'render_js': config['render_js'],
                 'country': 'br',
             },
             timeout=90
         )
         response.raise_for_status()
 
-        # --- CORREÇÃO IMPORTANTE ---
-        # 1. Analisa a resposta completa do ScrapFly como JSON
-        api_response = response.json()
-        # 2. Pega o conteúdo HTML de dentro do JSON
-        html_content = api_response['result']['content']
-        # -------------------------
+        # Extração do HTML do site
+        api_response = response.json() # 1. Analisa a resposta completa do ScrapFly como JSON
+        html_content = api_response.get('result', {}).get('content', '') # 2. Pega o conteúdo HTML de dentro do JSON
+        soup = BeautifulSoup(html_content, 'html.parser') # 3. BeautifulSoup analisa apenas o HTML correto
         
-        # 3. Agora o BeautifulSoup analisa apenas o HTML correto
-        soup = BeautifulSoup(html_content, 'html.parser')
-        
-        if selector == "json-ld":
-            script_tag = soup.find('script', {'type': 'application/ld+json'})
-            if not script_tag:
-                print("  - ERRO: Tag de script JSON-LD não encontrada.")
-                return None
-            
-            json_data = json.loads(script_tag.string)
-            price_str = json_data.get('offers', {}).get('price')
-            
-            if price_str:
-                return float(price_str)
-            else:
-                print("  - ERRO: Chave 'price' não encontrada no JSON-LD.")
-                return None
-        else:
-            # Esta parte continua aqui para ser usada com outras lojas no futuro
-            price_element = soup.select_one(selector)
-            if not price_element:
-                print(f"  - ERRO: Seletor CSS '{selector}' não encontrado.")
-                return None
+        # Extração do nome do produto
+        title_element = soup.select_one(config['seletor_titulo'])
+        title = title_element.get_text(strip=True) if title_element else "Título não encontrado"
 
-            price_text = price_element.get_text(strip=True)
-            price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
-            return float(price_clean)
+        # Extração do preço do produto
+        price = None
+
+        if config['seletor_preco'] == "json-ld": # Area com dados JSON no HTML do site
+
+            script_tag = soup.find('script', {'type': 'application/ld+json'})
+
+            if script_tag:
+                json_data = json.loads(script_tag.string)
+                price_str = json_data.get('offers', {}).get('price')
+
+                if price_str:
+                    price = float(price_str)
+
+        else:
+
+            price_element = soup.select_one(config['seletor_preco'])
+
+            if price_element:
+                price_text = price_element.get_text(strip=True)
+                price_clean = price_text.replace('R$', '').replace('.', '').replace(',', '.').strip()
+                price = float(price_clean)
+        
+        return {'title': title, 'price': price}
 
     except requests.exceptions.RequestException as e:
         print(f"  - ERRO de requisição para {url}: {e}")
@@ -77,37 +98,79 @@ def scrape_product_price(url: str, selector: str, render_js: bool):
         print(f"  - ERRO ao processar o dado para {url}: {e}")
         return None
 
-# Salva uma nova linha de dados no arquivo CSV.
+# Salva uma nova linha de dados em uma planilha do Google Sheets
 def save_data(data_row):
-    file_exists = os.path.isfile(OUTPUT_FILE)
-    with open(OUTPUT_FILE, 'a', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(['timestamp', 'nome', 'loja', 'preço']) # Escreve o cabeçalho
-        writer.writerow(data_row)
+
+    try:
+        # Pega as credenciais do Secret do GitHub
+        creds_json_str = os.getenv("GOOGLE_CREDENTIALS")
+        if not creds_json_str:
+            print("  - ERRO: Secret GOOGLE_CREDENTIALS não encontrado.")
+            return
+
+        creds_dict = json.loads(creds_json_str)
+        
+        # Define o escopo de permissões
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        
+        # Autentica usando as credenciais
+        gc = gspread.service_account_from_dict(creds_dict, scopes=scope)
+        
+        # Abre a planilha pelo nome e seleciona a primeira aba (worksheet)
+        spreadsheet = gc.open("Historico Precos") 
+        worksheet = spreadsheet.sheet1
+
+        # Adiciona o cabeçalho se a planilha estiver vazia
+        if not worksheet.get_all_records():
+             worksheet.append_row(['timestamp', 'nome', 'loja', 'preco'])
+
+        # Adiciona a linha de dados
+        worksheet.append_row(data_row)
+        
+    except gspread.exceptions.SpreadsheetNotFound:
+        print("  - ERRO: Planilha 'Historico Precos' não encontrada.")
+    except Exception as e:
+        print(f"  - ERRO ao salvar no Google Sheets: {e}")
 
 def main():
 
     if not API_KEY:
-        print("Erro: Chave de API do ScrapFly não configurada como variável de ambiente.")
+        print("Erro: Chave de API do ScrapFly não configurada.")
         return
 
-    products = load_products()
-    if not products:
+    urls = load_products()
+    if not urls:
         return
 
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"Iniciando verificação de preços em {timestamp}")
 
-    for product in products:
-        print(f"Buscando: {product['nome']} na loja {product['loja']}...")
-        price = scrape_product_price(product['url'], product['seletor'], product['render_js'])
-        
-        if price is not None:
-            data_row = [timestamp, product['nome'], product['loja'], price]
-            save_data(data_row)
-            print(f"  -> Preço encontrado: R$ {price:.2f}")
-        else:
-            print("  -> Falha ao encontrar o preço.")
+    for url in urls:
+        try:
+            # Extrai o domínio da URL para usar como chave do nosso dicionário
+            domain = urlparse(url).netloc
+            
+            if domain not in STORE_CONFIG:
+                print(f"AVISO: Loja com domínio '{domain}' não configurada. Pulando URL: {url}")
+                continue
+
+            config = STORE_CONFIG[domain]
+            print(f"Buscando: {config['nome_loja']} - {url}")
+            
+            product_data = scrape_product(url, config)
+            
+            if product_data and product_data['price'] is not None:
+                price = product_data['price']
+                title = product_data['title']
+                store_name = config['nome_loja']
+                
+                data_row = [timestamp, title, store_name, price]
+                save_data(data_row)
+                print(f"  -> Sucesso! '{title}' - R$ {price:.2f}")
+            else:
+                print("  -> Falha ao encontrar o preço.")
+        except Exception as e:
+            print(f"Ocorreu um erro inesperado ao processar a URL {url}: {e}")
 
     print("Verificação concluída.")
 
