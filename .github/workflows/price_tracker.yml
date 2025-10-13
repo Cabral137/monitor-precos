@@ -32,14 +32,12 @@ jobs:
         env:
           SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
 
-      # PASSO NOVO E IMPORTANTE PARA DEPURAR
-      - name: Salvar HTML de debug como Artefato
-        # Este passo só será executado se o arquivo de debug existir
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: html-debug-output
-          path: scrapfly_output.html
+      # - name: Salvar HTML de debug como Artefato
+      #   if: success() || failure()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: html-debug-output
+      #     path: scrapfly_output.html
 
       - name: Fazer commit dos novos preços
         run: |
