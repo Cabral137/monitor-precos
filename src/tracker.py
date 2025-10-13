@@ -133,12 +133,11 @@ def save_data(data_row):
         print(f"  - ERRO ao salvar no Google Sheets: {e}")
 
 def main():
-
     if not API_KEY:
         print("Erro: Chave de API do ScrapFly não configurada.")
         return
 
-    urls = load_products()
+    urls = load_products() 
     if not urls:
         return
 
@@ -147,25 +146,25 @@ def main():
 
     for url in urls:
         try:
-            # Extrai o domínio da URL para usar como chave do nosso dicionário
             domain = urlparse(url).netloc
-            
+
             if domain not in STORE_CONFIG:
                 print(f"AVISO: Loja com domínio '{domain}' não configurada. Pulando URL: {url}")
                 continue
 
             config = STORE_CONFIG[domain]
             print(f"Buscando: {config['nome_loja']} - {url}")
-            
+
             product_data = scrape_product(url, config)
-            
+
             if product_data and product_data['price'] is not None:
                 price = product_data['price']
                 title = product_data['title']
                 store_name = config['nome_loja']
-                
+
                 data_row = [timestamp, title, store_name, price]
-                save_data(data_row)
+                save_data(data_row) 
+
                 print(f"  -> Sucesso! '{title}' - R$ {price:.2f}")
             else:
                 print("  -> Falha ao encontrar o preço.")
