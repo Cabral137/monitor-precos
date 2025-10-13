@@ -31,6 +31,7 @@ jobs:
         run: python src/tracker.py || true
         env:
           SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       # - name: Salvar HTML de debug como Artefato
       #   if: success() || failure()
@@ -38,13 +39,3 @@ jobs:
       #   with:
       #     name: html-debug-output
       #     path: scrapfly_output.html
-
-      - name: Fazer commit dos novos preços
-        run: |
-          git config --global user.name 'GitHub Actions Bot'
-          git config --global user.email 'actions@github.com'
-          # Adiciona todos os arquivos na pasta data (products.json e price_history.csv)
-          git add data/*
-          # Faz o commit apenas se houver mudanças
-          git diff --staged --quiet || git commit -m "Atualiza histórico de preços - $(date)"
-          git push
