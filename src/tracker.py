@@ -120,7 +120,7 @@ def save_data(data_row):
         # Autentica usando as credenciais
         gc = gspread.service_account_from_dict(creds_dict, scopes=scope)
         
-        # Abre a planilha pelo nome e seleciona a primeira aba (worksheet)
+        # Abre a planilha pelo nome e seleciona a primeira aba
         spreadsheet = gc.open("Historico Precos") 
         worksheet = spreadsheet.sheet1
 
