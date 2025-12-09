@@ -1,5 +1,19 @@
 # Monitor de Preços 
 
+### - Estrutura dos arquivos
+```
+scrapfly/
+│
+├── requirements.txt                    
+│
+└── src/                
+    ├── config.py                           
+    ├── integrations.py                   
+    ├── main.py                 
+    ├── scrapper.py                         
+    └── tracker.py                            
+```
+
 ### - Pré-requisitos
 
 Para configurar este projeto, é necessário configurar três serviços externos: 

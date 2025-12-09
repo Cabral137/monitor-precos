@@ -28,7 +28,7 @@ jobs:
 
       - name: Rodar o script de scraping
 
-        run: python src/tracker.py || true
+        run: python src/main.py || true
         env:
           SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
