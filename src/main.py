@@ -5,11 +5,7 @@ from urllib.parse import urlparse
 
 # Import dos outros arquivos
 from config import STORE_CONFIG
-from integrations import (
-    get_sheets_client, 
-    load_products, 
-    save_product_data, 
-)
+from integrations import (get_sheets_client, load_products, save_product_data)
 from scraper import scrape_product
 
 def main():
