@@ -9,6 +9,8 @@ from integrations import (get_sheets_client, load_products, save_product_data)
 from scraper import scrape_product
 
 def main():
+
+    # --- Verificações de segurança ---
     if not os.getenv("SCRAPFLY_API_KEY") or not os.getenv("GOOGLE_CREDENTIALS"):
         print("Erro: Chaves de API não configuradas.")
         return

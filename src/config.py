@@ -3,7 +3,7 @@ STORE_CONFIG = {
 
     "www.kabum.com.br": {
         "nome_loja": "Kabum",
-        "seletor_titulo": "h1.sc-a1f7a75-1",
+        "seletor_titulo": "json-ld",
         "seletor_preco": "json-ld",
         "render_js": False
     },
