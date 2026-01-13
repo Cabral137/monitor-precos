@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 # Import dos outros arquivos
 from config import STORE_CONFIG
 from scraper import scrape_product
-from integrations import (get_supabase_client, get_produtos, save_precos)
+from integrations import (get_supabase_client, get_produtos, save_preco)
 
 def main():
 
@@ -40,7 +40,7 @@ def main():
             product_data = scrape_product(url, config)
 
             if product_data and product_data['price'] is not None:
-                if save_precos(supabase_client, id_produto, product_data['price']):
+                if save_preco(supabase_client, id_produto, product_data['price']):
                     print(f"{product_data['title']} - {product_data['price']} salvo com suceeso")
             else:
                 print(f"Falha ao encontrar o preco do item {product_data['title']}")

@@ -14,46 +14,46 @@ def clear_name(name):
 
 
 
-# --- Google Sheets ---
+# # --- Google Sheets ---
 
-def get_sheets_client():
-    creds_json_str = os.getenv("GOOGLE_CREDENTIALS")
-    if not creds_json_str:
-        print("  - ERRO: Secret GOOGLE_CREDENTIALS não encontrado.")
-        return None
-    creds_dict = json.loads(creds_json_str)
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    return gspread.service_account_from_dict(creds_dict, scopes=scope)
+# def get_sheets_client():
+#     creds_json_str = os.getenv("GOOGLE_CREDENTIALS")
+#     if not creds_json_str:
+#         print("  - ERRO: Secret GOOGLE_CREDENTIALS não encontrado.")
+#         return None
+#     creds_dict = json.loads(creds_json_str)
+#     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+#     return gspread.service_account_from_dict(creds_dict, scopes=scope)
 
-# Carrega a lista de produtos do Sheets
-def load_products(gc):
-    try:
-        spreadsheet = gc.open("Historico Precos")
-        worksheet = spreadsheet.worksheet("Produtos")
-        urls = worksheet.col_values(1)[1:]
-        print(f"  - {len(urls)} URL(s) encontradas na planilha.")
-        return urls
-    except Exception as e:
-        print(f"  - ERRO ao ler as URLs da planilha: {e}")
-    return []
+# # Carrega a lista de produtos do Sheets
+# def load_products(gc):
+#     try:
+#         spreadsheet = gc.open("Historico Precos")
+#         worksheet = spreadsheet.worksheet("Produtos")
+#         urls = worksheet.col_values(1)[1:]
+#         print(f"  - {len(urls)} URL(s) encontradas na planilha.")
+#         return urls
+#     except Exception as e:
+#         print(f"  - ERRO ao ler as URLs da planilha: {e}")
+#     return []
 
-# Salva os dados na planilha
-def save_product_data(spreadsheet, product_data, timestamp):
-    try:
-        sheet_name = clear_name(product_data['title'])
+# # Salva os dados na planilha
+# def save_product_data(spreadsheet, product_data, timestamp):
+#     try:
+#         sheet_name = clear_name(product_data['title'])
 
-        try:
-            product_sheet = spreadsheet.worksheet(sheet_name) # Tenta encontrar a guia do produto
-        except gspread.exceptions.WorksheetNotFound:
-            print(f"  - Criando nova guia para o produto: '{sheet_name}'") 
-            product_sheet = spreadsheet.add_worksheet(title=sheet_name, rows="100", cols="20") # Se não encontrar, cria a guia
-            product_sheet.append_row(['Timestamp', 'Preco'])
+#         try:
+#             product_sheet = spreadsheet.worksheet(sheet_name) # Tenta encontrar a guia do produto
+#         except gspread.exceptions.WorksheetNotFound:
+#             print(f"  - Criando nova guia para o produto: '{sheet_name}'") 
+#             product_sheet = spreadsheet.add_worksheet(title=sheet_name, rows="100", cols="20") # Se não encontrar, cria a guia
+#             product_sheet.append_row(['Timestamp', 'Preco'])
 
-        # Adiciona a nova linha pesquisada
-        product_sheet.append_row([timestamp, product_data['price']])
+#         # Adiciona a nova linha pesquisada
+#         product_sheet.append_row([timestamp, product_data['price']])
 
-    except Exception as e:
-        print(f"  - ERRO AO SALVAR DADOS: {e}")
+#     except Exception as e:
+#         print(f"  - ERRO AO SALVAR DADOS: {e}")
 
 
 
@@ -74,12 +74,19 @@ def get_produtos(supabase: Client):
 
     try:
         resposta = supabase.table("produtos").select("id, url").execute()
-        print(f" - {len(resposta.data)} produtos encontrados")
         return resposta.data
     except Exception as e:
         print(f"ERRO: Não foi possível carregar os produtos {e}")
 
-def save_precos (supabase: Client, product_id: str, price: float):
+def get_precos (supabase: Client, product_id: str):
+
+    try:
+        resposta = supabase.table("precos").select("*").eq("id_produto", product_id).execute()
+        return resposta.data
+    except Exception as e:
+        print(f"ERRO: Não foi possível carregar os preços {e}")
+
+def save_preco (supabase: Client, product_id: str, price: float):
 
     try:
         data = { "id_produto": product_id, "preco": price}
@@ -87,4 +94,14 @@ def save_precos (supabase: Client, product_id: str, price: float):
         return True
     except Exception as e:
         print(f"ERRO: Não foi possível salvar o preço {e}")
+        return False
+    
+def save_produto (supabase: Client, name: str, url: str):
+    
+    try:
+        data = {"nome": name, "url": url}
+        supabase.table("produtos").insert(data).execute()
+        return True
+    except Exception as e:
+        print(f"ERRO: Não foi possível salvar o produto {e}")
         return False
