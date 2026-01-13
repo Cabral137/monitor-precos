@@ -2,3 +2,4 @@ gspread
 requests
 oauth2client
 beautifulsoup4
+supabase

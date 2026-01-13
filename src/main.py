@@ -5,54 +5,50 @@ from urllib.parse import urlparse
 
 # Import dos outros arquivos
 from config import STORE_CONFIG
-from integrations import (get_sheets_client, load_products, save_product_data)
 from scraper import scrape_product
+from integrations import (get_supabase_client, get_produtos, save_precos)
 
 def main():
 
     # --- Verificações de segurança ---
-    if not os.getenv("SCRAPFLY_API_KEY") or not os.getenv("GOOGLE_CREDENTIALS"):
+    if not os.getenv("SCRAPFLY_API_KEY") or not os.getenv("GOOGLE_CREDENTIALS") or not os.getenv("SUPABASE_URL"):
         print("Erro: Chaves de API não configuradas.")
         return
 
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(f"Iniciando verificação de preços em {timestamp}")
+    print(f"Iniciando verificação de preços em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-    google_client = get_sheets_client()
-    if not google_client: return
+    supabase_client = get_supabase_client()
+    if not supabase_client: return
 
-    try:
-        spreadsheet = google_client.open("Historico Precos")
-    except Exception as e:
-        print("ERRO: Planilha 'Historico Precos' não encontrada")
+    produtos = get_produtos(supabase_client)
+    if not produtos: 
+        print("Nenhum produto encontrado")
         return
 
-    urls = load_products(google_client) 
-    if not urls:
-        print("Nenhuma URL para processar. Verificação concluída.")
-        return
+    for item in produtos:
+        id_produto = item['id']
+        url = item['url']
 
-    for url in urls:
         try:
             domain = urlparse(url).netloc
 
             if domain not in STORE_CONFIG:
-                print(f"AVISO: Loja '{domain}' não configurada")
+                print("ERRO: Site não configurado")
                 continue
 
             config = STORE_CONFIG[domain]
-            print(f"Buscando: {config['nome_loja']} - {url}")
             product_data = scrape_product(url, config)
 
             if product_data and product_data['price'] is not None:
-                save_product_data(spreadsheet, product_data, timestamp) 
-                print(f"  -> Sucesso! '{product_data['title']}' - R$ {product_data['price']:.2f}")
+                if save_precos(supabase_client, id_produto, product_data['price']):
+                    print(f"{product_data['title']} - {product_data['price']} salvo com suceeso")
             else:
-                print("  -> Falha ao encontrar o preço.")
-        except Exception as e:
-            print(f"Ocorreu um erro inesperado ao processar a URL {url}: {e}")
+                print(f"Falha ao encontrar o preco do item {product_data['title']}")
 
-    print("Verificação concluída.")
+        except Exception as e:
+            print(f"ERRO: Ocorreu um erro ao processar {e}")
+
+    print("Análise concluída")
 
 if __name__ == "__main__":
     main()

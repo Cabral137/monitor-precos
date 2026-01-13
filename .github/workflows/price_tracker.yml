@@ -32,6 +32,8 @@ jobs:
         env:
           SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL}}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY}}
 
       # - name: Salvar HTML de debug como Artefato
       #   if: success() || failure()
