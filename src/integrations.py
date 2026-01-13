@@ -73,7 +73,7 @@ def get_supabase_client() -> Client:
 def get_produtos(supabase: Client):
 
     try:
-        resposta = supabase.table("products").select("id, url").execute()
+        resposta = supabase.table("produtos").select("id, url").execute()
         print(f" - {len(resposta.data)} produtos encontrados")
         return resposta.data
     except Exception as e:
