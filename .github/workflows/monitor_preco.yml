@@ -1,4 +1,4 @@
-# .github/workflows/price_tracker.yml
+# .github/workflows/monitor_preco.yml
 
 name: Monitor de Preços Diário
 

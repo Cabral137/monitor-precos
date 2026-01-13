@@ -4,9 +4,9 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 # Import dos outros arquivos
-from config import STORE_CONFIG
-from scraper import scrape_product
-from integrations import (get_supabase_client, get_produtos, save_preco)
+from src.core.config import STORE_CONFIG
+from src.monitoramento.scraper import scrape_product
+from src.core.database import (get_supabase_client, get_produtos, save_preco)
 
 def main():
 
