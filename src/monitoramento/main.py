@@ -11,7 +11,7 @@ from src.core.database import (get_supabase_client, get_produtos, save_preco)
 def main():
 
     # --- Verificações de segurança ---
-    if not os.getenv("SCRAPFLY_API_KEY") or not os.getenv("GOOGLE_CREDENTIALS") or not os.getenv("SUPABASE_URL"):
+    if not os.getenv("SCRAPFLY_API_KEY") or not os.getenv("SUPABASE_URL"):
         print("Erro: Chaves de API não configuradas.")
         return
 
