@@ -27,17 +27,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Rodar o script de scraping
-
-        run: python src/main.py || true
         env:
+          PYTHONPATH: .
           SCRAPFLY_API_KEY: ${{ secrets.SCRAPFLY_API_KEY }}
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL}}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY}}
-
-      # - name: Salvar HTML de debug como Artefato
-      #   if: success() || failure()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: html-debug-output
-      #     path: scrapfly_output.html
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python src/monitoramento/main.py

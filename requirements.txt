@@ -1,5 +1,6 @@
-gspread
-requests
-oauth2client
-beautifulsoup4
+fastapi
+uvicorn
+python-telegram-bot
 supabase
+requests
+beautifulsoup4
