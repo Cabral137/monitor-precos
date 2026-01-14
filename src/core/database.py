@@ -52,3 +52,11 @@ def save_produto (supabase: Client, name: str, url: str):
     except Exception as e:
         print(f"ERRO: Não foi possível salvar o produto {e}")
         return False
+    
+def delete_produto (supabase: Client, product_id: str):
+
+    try:
+        supabase.table("produtos").delete().eq("id", product_id).execute()
+    except Exception as e:
+        print(f"ERRO: Não foi possível deletar o produto {e}")
+        return None
