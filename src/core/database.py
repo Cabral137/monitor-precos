@@ -28,7 +28,7 @@ def get_produtos(supabase: Client):
 def get_precos (supabase: Client, product_id: str):
 
     try:
-        resposta = supabase.table("precos").select("*").eq("id_produto", product_id).execute()
+        resposta = supabase.table("precos").select("*").eq("id_produto", product_id).order("timestamp", ascending=False).limit(5).execute()
         return resposta.data
     except Exception as e:
         print(f"ERRO: Não foi possível carregar os preços {e}")

@@ -57,14 +57,35 @@ async def list (chat_id):
         mensagem = "Produtos:\n\n"
 
         for item in produtos:
-            mensagem += f"{item['id']} - {item['nome']}\n"
+            mensagem += f"- {item['nome']}\n `{item['id']}`\n\n"
 
-        await bot.send_message(chat_id, mensagem)
+        await bot.send_message(chat_id, mensagem, parse_mode="Markdown")
+    
+    else:
+        await bot.send_message(chat_id, "Não foi possível listar os produtos")
+    
 
+async def get (chat_id, args):
 
-async def get (chat_id, id):
+    if not args:
+        await bot.send_message(chat_id, "Uso: /get <ID> (Use /list para ver os IDs)")
+        return
 
-    await bot.send_message(chat_id, "Ainda não implementado")
+    product_id = args[0]
+    
+    historico = get_precos(supabase, product_id)
+
+    if not historico:
+        await bot.send_message(chat_id, "Nenhum histórico de preço encontrado")
+        return
+
+    mensagem = "Histórico de Preços:\n\n"
+
+    for item in historico:
+        data_formatada = item['timestamp'][:16].replace("T", " ") # Limpa o formato ISO
+        mensagem += f"- R$ {item['preco']:.2f} — {data_formatada}\n"
+
+    await bot.send_message(chat_id, mensagem, parse_mode="Markdown")
 
 
 async def delete (chat_id, id):
