@@ -20,7 +20,7 @@ def get_supabase_client() -> Client:
 def get_produtos(supabase: Client):
 
     try:
-        resposta = supabase.table("produtos").select("id, url").execute()
+        resposta = supabase.table("produtos").select("*").order("id").execute()
         return resposta.data
     except Exception as e:
         print(f"ERRO: Não foi possível carregar os produtos {e}")

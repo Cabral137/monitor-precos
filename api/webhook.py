@@ -50,13 +50,13 @@ async def list (chat_id):
 
     if produtos:
 
-        if not produtos.data:
+        if not produtos:
             await bot.send_message(chat_id, "Nenhum produto encontrado")
             return
 
         mensagem = "Produtos:\n\n"
 
-        for item in produtos.data:
+        for item in produtos:
             mensagem += f"{item['id']} - {item['nome']}\n"
 
         await bot.send_message(chat_id, mensagem)
