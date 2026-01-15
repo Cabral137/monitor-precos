@@ -28,7 +28,7 @@ def get_produtos(supabase: Client):
 def get_precos (supabase: Client, product_id: str):
 
     try:
-        resposta = supabase.table("precos").select("*").eq("id_produto", product_id).order("timestamp", ascending=False).limit(5).execute()
+        resposta = supabase.table("precos").select("*").eq("id_produto", int(product_id)).order("timestamp", ascending=False).limit(5).execute()
         return resposta.data
     except Exception as e:
         print(f"ERRO: Não foi possível carregar os preços {e}")
@@ -56,7 +56,8 @@ def save_produto (supabase: Client, name: str, url: str):
 def delete_produto (supabase: Client, product_id: str):
 
     try:
-        supabase.table("produtos").delete().eq("id", product_id).execute()
+        supabase.table("produtos").delete().eq("id", int(product_id)).execute()
+        return True
     except Exception as e:
         print(f"ERRO: Não foi possível deletar o produto {e}")
-        return None
+        return False
