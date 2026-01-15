@@ -24,7 +24,7 @@ def envio_alerta (mensagem: str):
         token = os.getenv("TELEGRAM_TOKEN")
         chat_id = os.getenv("TELEGRAM_ID")
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        payload = {"chat_id": chat_id, "text":mensagem, "parse_mode": "MarkdownV2"}
+        payload = {"chat_id": chat_id, "text":mensagem, "parse_mode": "HTML"}
         requests.post(url, json=payload)
     except Exception as e:
         print(f"ERRO: Não foi possível enviar o alerta {e}")

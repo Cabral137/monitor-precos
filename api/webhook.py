@@ -19,29 +19,28 @@ supabase = get_supabase_client()
 async def add (chat_id, args):
 
     if not args:
-        await bot.send_message(chat_id, "Uso: /add <URL>")
+        await bot.send_message(chat_id, "<b>Uso:</b> <code>/add &lt;URL&gt;</code>", parse_mode="HTML")
         return
 
     # Somente o Admin pode adicionar
     if str(chat_id) != ADMIN_ID:
-        await bot.send_message(chat_id, "Você não tem permissão para adicionar produtos")
+        await bot.send_message(chat_id, "❌ <b>Acesso Negado:</b> Você não tem permissão para adicionar produtos", parse_mode="HTML")
         return
     
     url = args[0]
     dominio = urlparse(url).netloc
 
     if dominio not in STORE_CONFIG:
-        await bot.send_message(chat_id, "Site não configurado")
+        await bot.send_message(chat_id, f"⚠️ <b>Erro:</b> O site <i>{dominio}</i> não está configurado no sistema", parse_mode="HTML")
         return 
     
     product_info = scrape_product(url, STORE_CONFIG[dominio])
 
     if product_info and  product_info['title'] != "Título não encontrado":
         save_produto(supabase, product_info['title'], url)
-        await bot.send_message(chat_id, "Produto adicionado com sucesso")
-
+        await bot.send_message(chat_id, f"✅ <b>Produto Adicionado:</b>\n{product_info['title']}", parse_mode="HTML")
     else:
-        await bot.send_message(chat_id, "Não foi possível adicionar o produto")
+        await bot.send_message(chat_id, "⚠️ <b>Erro:</b> Não foi possível adicionar o produto", parse_mode="HTML")
 
 
 async def list (chat_id):
@@ -54,24 +53,24 @@ async def list (chat_id):
             await bot.send_message(chat_id, "Nenhum produto encontrado")
             return
 
-        mensagem = "📋 *Produtos Monitorados*\n\n"
+        mensagem = "<b>📋 Produtos Monitorados</b>\n\n"
 
         for item in produtos:
-            mensagem += f"🆔 ID: `{item['id']}`\n"
-            mensagem += f"📦 *{item['nome']}*\n"
-            mensagem += f"🔗 [Link do Produto]({item['url']})\n"
-            mensagem += " — — — — — — — — —\n"
+            mensagem += f"🆔 ID: <code>{item['id']}</code>\n"
+            mensagem += f"📦 <b>{item['nome']}</b>\n"
+            mensagem += f"🔗 <a href='{item['url']}'>Ver na Loja</a>\n"
+            mensagem += "————————————————\n"
 
-        await bot.send_message(chat_id, mensagem, parse_mode="MarkdownV2")
+        await bot.send_message(chat_id, mensagem, parse_mode="HTML")
     
     else:
-        await bot.send_message(chat_id, "Não foi possível listar os produtos")
+        await bot.send_message(chat_id, "⚠️ <b>Erro:</b> Não foi possível listar os produtos", parse_mode="HTML")
     
 
 async def get (chat_id, args):
 
     if not args:
-        await bot.send_message(chat_id, "Uso: /get <ID> (Use /list para ver os IDs)")
+        await bot.send_message(chat_id, "<b>Uso:</b> <code>/get &lt;ID&gt;</code>\n<i>(Use /list para ver os IDs)</i>", parse_mode="HTML")
         return
 
     product_id = args[0]
@@ -79,7 +78,7 @@ async def get (chat_id, args):
     historico = get_precos(supabase, product_id)
 
     if not historico:
-        await bot.send_message(chat_id, "Nenhum histórico de preço encontrado")
+        await bot.send_message(chat_id, f"<b>Histórico vazio:</b> Não encontrei preços para esse produto", parse_mode="HTML")
         return
 
     mensagem = "📊 *Histórico de Preços*\n\n"
@@ -88,25 +87,25 @@ async def get (chat_id, args):
         data = item['timestamp'][:10].replace("-", "\/")
         mensagem += f"💰 *R$ {item['preco']:.2f}* \| 📅 {data}\n"
 
-    await bot.send_message(chat_id, mensagem, parse_mode="Markdown")
+    await bot.send_message(chat_id, mensagem, parse_mode="HTML")
 
 
 async def delete (chat_id, id):
 
     # Somente o Admin pode deletar
     if str(chat_id) != ADMIN_ID:
-        await bot.send_message(chat_id, "Você não tem permissão para deletar produtos")
+        await bot.send_message(chat_id, "❌ <b>Acesso Negado:</b> Você não tem permissão para deletar produtos", parse_mode="HTML")
         return
 
     if not id:
-        await bot.send_message(chat_id, "Uso: /delete <ID> (Use /list para listar os IDs)")
+        await bot.send_message(chat_id, "<b>Uso:</b> <code>/delete &lt;ID&gt;</code>", parse_mode="HTML")
         return
 
     try:
         delete_produto(supabase, id)
-        await bot.send_message(chat_id, "Produto deletado com sucesso")
+        await bot.send_message(chat_id, f"🗑️ <b>Sucesso:</b> Produto <code>{id}</code> foi removido.", parse_mode="HTML")
     except Exception as e:
-        await bot.send_message(chat_id, "Não foi possível deletar o produto")
+        await bot.send_message(chat_id, f"⚠️ <b>Erro:</b> Não foi possível deletar o produto", parse_mode="HTML")
 
 
 # --- Função Principal ---
@@ -128,7 +127,14 @@ async def run_webhook (request: Request):
 
     match command:
         case "/start":
-            await bot.send_message(chat_id, "Bem-vindo!\n\n Comandos: \n\n `/add`\n `/delete`\n `/list`\n `/get`")
+            mensagem = (
+                f"Comandos Disponíveis:\n\n"
+                f"➕ <code>/add &lt;link&gt;</code> - Monitorar novo item\n"
+                f"📋 <code>/list</code> - Ver todos os produtos\n"
+                f"📊 <code>/get &lt;id&gt;</code> - Ver histórico de preço\n"
+                f"🗑️ <code>/delete &lt;id&gt;</code> - Parar monitoramento de um item"
+            )
+            await bot.send_message(chat_id, mensagem, parse_mode="HTML")
         case "/add":
             await add(chat_id, args)
         case "/delete":
@@ -138,6 +144,6 @@ async def run_webhook (request: Request):
         case "/get":
             await get(chat_id, args)
         case _:
-            await bot.send_message(chat_id, "Comando desconhecido.", parse_mode="Markdown")
+            await bot.send_message(chat_id, "Comando desconhecido.\nDigite <code>/start</code> para ver as opções", parse_mode="HTML")
 
     return {"status": "ok"}

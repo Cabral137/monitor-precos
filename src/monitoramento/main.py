@@ -49,11 +49,11 @@ def main():
                 preco_antigo = get_precos(supabase_client, id_produto)[0]
 
                 if product_data['price'] < preco_antigo:
-                    
-                    mensagem = "📉 *ALERTA DE QUEDA\!*\n\n"
+
+                    mensagem = "📉 <b>ALERTA DE QUEDA!</b>\n\n"
                     mensagem += f"📦 {product_data['title']}\n\n"
-                    mensagem += f"De: ~R$ {preco_antigo:.2f}~\n"
-                    mensagem += f"Por: *R$ {product_data['price']:.2f}*\n"
+                    mensagem += f"De: <s>R$ {preco_antigo:.2f}</s>\n"
+                    mensagem += f"Por: <b>R$ {product_data['price']:.2f}</b>\n"
                     
                     envio_alerta(mensagem)
 
