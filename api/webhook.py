@@ -54,10 +54,11 @@ async def list (chat_id):
             return
 
         mensagem = "<b>📋 Produtos Monitorados</b>\n\n"
+        mensagem += "————————————————\n"
 
         for item in produtos:
             mensagem += f"🆔 ID: <code>{item['id']}</code>\n"
-            mensagem += f"📦 <b>{item['nome']}</b>\n"
+            mensagem += f"📦 <b>{item['nome']}</b>\n\n"
             mensagem += f"🔗 <a href='{item['url']}'>Ver na Loja</a>\n"
             mensagem += "————————————————\n"
 
@@ -84,8 +85,8 @@ async def get (chat_id, args):
     mensagem = "📊 *Histórico de Preços*\n\n"
 
     for item in historico:
-        data = item['timestamp'][:10].replace("-", "\/")
-        mensagem += f"💰 *R$ {item['preco']:.2f}* \| 📅 {data}\n"
+        data = item['timestamp'][:10].replace("-", "/")
+        mensagem += f"💰 <b>R$ {item['preco']:.2f}</b> | 📅 {data}\n"
 
     await bot.send_message(chat_id, mensagem, parse_mode="HTML")
 
@@ -129,10 +130,10 @@ async def run_webhook (request: Request):
         case "/start":
             mensagem = (
                 f"Comandos Disponíveis:\n\n"
-                f"➕ <code>/add &lt;link&gt;</code> - Monitorar novo item\n"
-                f"📋 <code>/list</code> - Ver todos os produtos\n"
-                f"📊 <code>/get &lt;id&gt;</code> - Ver histórico de preço\n"
-                f"🗑️ <code>/delete &lt;id&gt;</code> - Parar monitoramento de um item"
+                f"<code>/add &lt;link&gt;</code> - Monitorar novo item\n"
+                f"<code>/list</code> - Ver todos os produtos\n"
+                f"<code>/get &lt;id&gt;</code> - Ver histórico de preço\n"
+                f"<code>/delete &lt;id&gt;</code> - Parar monitoramento de um item"
             )
             await bot.send_message(chat_id, mensagem, parse_mode="HTML")
         case "/add":
