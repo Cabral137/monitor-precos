@@ -1,10 +1,11 @@
+import re
 import os
 import json
-import re
+import requests
 from supabase import create_client, Client 
 
 
-# --- Supabase ---
+# --- Auxiliares ---
 
 def get_supabase_client() -> Client:
 
@@ -16,6 +17,19 @@ def get_supabase_client() -> Client:
         return None
     
     return create_client(url, key)
+
+def envio_alerta (mensagem: str):
+
+    try:
+        token = os.getenv("TELEGRAM_TOKEN")
+        chat_id = os.getenv("TELEGRAM_ID")
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = {"chat_id": chat_id, "text":mensagem, "parse_mode": "MarkdownV2"}
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"ERRO: Não foi possível enviar o alerta {e}")
+
+# --- Funções ---
 
 def get_produtos(supabase: Client):
 
@@ -56,7 +70,7 @@ def save_produto (supabase: Client, name: str, url: str):
 def delete_produto (supabase: Client, product_id: str):
 
     try:
-        
+
         if isinstance(product_id, list):
             product_id = product_id[0]
 

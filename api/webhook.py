@@ -54,12 +54,15 @@ async def list (chat_id):
             await bot.send_message(chat_id, "Nenhum produto encontrado")
             return
 
-        mensagem = "Produtos:\n\n"
+        mensagem = "📋 *Produtos Monitorados*\n\n"
 
         for item in produtos:
-            mensagem += f"- {item['nome']}\n `{item['id']}`\n\n"
+            mensagem += f"🆔 ID: `{item['id']}`\n"
+            mensagem += f"📦 *{item['nome']}*\n"
+            mensagem += f"🔗 [Link do Produto]({item['url']})\n"
+            mensagem += " — — — — — — — — —\n"
 
-        await bot.send_message(chat_id, mensagem, parse_mode="Markdown")
+        await bot.send_message(chat_id, mensagem, parse_mode="MarkdownV2")
     
     else:
         await bot.send_message(chat_id, "Não foi possível listar os produtos")
@@ -79,11 +82,11 @@ async def get (chat_id, args):
         await bot.send_message(chat_id, "Nenhum histórico de preço encontrado")
         return
 
-    mensagem = "Histórico de Preços:\n\n"
+    mensagem = "📊 *Histórico de Preços*\n\n"
 
     for item in historico:
-        data_formatada = item['timestamp'][:16].replace("T", " ") # Limpa o formato ISO
-        mensagem += f"- R$ {item['preco']:.2f} — {data_formatada}\n"
+        data = item['timestamp'][:10].replace("-", "\/")
+        mensagem += f"💰 *R$ {item['preco']:.2f}* \| 📅 {data}\n"
 
     await bot.send_message(chat_id, mensagem, parse_mode="Markdown")
 
@@ -106,7 +109,7 @@ async def delete (chat_id, id):
         await bot.send_message(chat_id, "Não foi possível deletar o produto")
 
 
-# --- Função Principal (Router) ---
+# --- Função Principal ---
 
 @app.post("/webhook")
 async def run_webhook (request: Request):
@@ -125,7 +128,7 @@ async def run_webhook (request: Request):
 
     match command:
         case "/start":
-            await bot.send_message(chat_id, "Bem-vindo!\n\n Comandos: \n\n /add\n /delete\n /list\n /get")
+            await bot.send_message(chat_id, "Bem-vindo!\n\n Comandos: \n\n `/add`\n `/delete`\n `/list`\n `/get`")
         case "/add":
             await add(chat_id, args)
         case "/delete":
@@ -135,6 +138,6 @@ async def run_webhook (request: Request):
         case "/get":
             await get(chat_id, args)
         case _:
-            await bot.send_message(chat_id, "Comando desconhecido.")
+            await bot.send_message(chat_id, "Comando desconhecido.", parse_mode="Markdown")
 
     return {"status": "ok"}
