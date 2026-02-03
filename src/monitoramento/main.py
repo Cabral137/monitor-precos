@@ -48,7 +48,7 @@ def main():
             try:
                 preco_antigo = get_precos(supabase_client, id_produto)[0]
 
-                if product_data['price'] != preco_antigo[len(preco_antigo) - 1]['preco']:
+                if product_data['price'] != preco_antigo['preco']:
 
                     mensagem = "📉 <b>Alteração de Preço!</b>\n\n"
                     mensagem += f"📦 {product_data['title']}\n\n"
