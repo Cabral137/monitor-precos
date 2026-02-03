@@ -82,7 +82,7 @@ async def get (chat_id, args):
         await bot.send_message(chat_id, f"<b>Histórico vazio:</b> Não encontrei preços para esse produto", parse_mode="HTML")
         return
 
-    mensagem = "📊 *Histórico de Preços*\n\n"
+    mensagem = "📊 <b>Histórico de Preços</b>\n\n"
 
     for item in historico:
         data = item['timestamp'][:10].replace("-", "/")
