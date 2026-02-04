@@ -54,6 +54,8 @@ def main():
                     mensagem += f"📦 {product_data['title']}\n\n"
                     mensagem += f"De: <s>R$ {preco_antigo:.2f}</s>\n"
                     mensagem += f"Por: <b>R$ {product_data['price']:.2f}</b>\n"
+
+                    print("Alteracao de Preco")
                     
                     envio_alerta(mensagem)
 
