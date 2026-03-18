@@ -12,7 +12,7 @@ STORE_CONFIG = {
         "nome_loja": "Amazon",
         "seletor_titulo": "span#productTitle",
         "seletor_preco": "span.a-price-whole",
-        "render_js": True
+        "render_js": False
     }
 
 }
