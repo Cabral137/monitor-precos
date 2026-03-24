@@ -40,7 +40,12 @@ async def add (chat_id, args):
         save_produto(supabase, product_info['title'], url)
         await bot.send_message(chat_id, f"✅ <b>Produto Adicionado:</b>\n{product_info['title']}", parse_mode="HTML")
     else:
-        await bot.send_message(chat_id, "⚠️ <b>Erro:</b> Não foi possível adicionar o produto", parse_mode="HTML")
+        await bot.send_message(chat_id, 
+            f"⚠️ <b>Falha na extração:</b>\n"
+            f"Título capturado: <code>{product_info['title']}</code>\n"
+            f"Preço capturado: <code>{product_info['price']}</code>\n",
+            parse_mode="HTML"
+        )
 
 
 async def list (chat_id):
