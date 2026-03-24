@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 from bs4 import BeautifulSoup
@@ -29,16 +30,31 @@ def scrape_product(url: str, config: dict, debug: bool = False):
         # Verifica se precisaremos do JSON-LD para Título ou Preço
         json_data = None
         if config.get('seletor_titulo') == "json-ld" or config.get('seletor_preco') == "json-ld":
-            script_tag = soup.find('script', {'type': 'application/ld+json'})
-            if script_tag and script_tag.string:
-                try:
-                    data = json.loads(script_tag.string)
-                    if isinstance(data, list):
-                        json_data = next((item for item in data if item.get('@type') == 'Product'), data[0])
-                    else:
-                        json_data = data
-                except json.JSONDecodeError:
-                    if debug: print("  -> Erro ao decodificar JSON-LD")
+            scripts = soup.find_all('script', {'type': 'application/ld+json'})
+            for script in scripts:
+                if script and script.string:
+                    try:
+                        data = json.loads(script.string)
+                        # Trata se o JSON for uma lista
+                        if isinstance(data, list):
+                            for item in data:
+                                if item.get('@type') == 'Product':
+                                    json_data = item
+                                    break
+                        # Trata se o JSON for um dicionário
+                        elif isinstance(data, dict):
+                            if '@graph' in data:
+                                for item in data['@graph']:
+                                    if item.get('@type') == 'Product':
+                                        json_data = item
+                                        break
+                            elif data.get('@type') == 'Product':
+                                json_data = data
+                                
+                        if json_data:
+                            break
+                    except json.JSONDecodeError:
+                        continue
 
         # --- 1. Extração do Título ---
         title = "Título não encontrado"
@@ -66,20 +82,25 @@ def scrape_product(url: str, config: dict, debug: bool = False):
                 
         elif seletor_preco and seletor_preco != "json-ld":
             el = soup.select_one(seletor_preco)
+
             if el:
                 price_text = el.get_text(strip=True)
-                price_clean = (price_text.replace('R$', '')
-                               .replace('\xa0', '')
-                               .replace(' ', '')
-                               .replace('.', '')
-                               .replace(',', '.')
-                               .strip())
-                try:
-                    price = float(price_clean)
-                except ValueError:
-                    pass
+                
+                price_clean = re.sub(r'[^\d,.]', '', price_text)
+                
+                if price_clean:
+                    # Lógica de conversão segura
+                    if ',' in price_clean and '.' in price_clean:
+                        price_clean = price_clean.replace('.', '').replace(',', '.')
+                    elif ',' in price_clean:
+                        price_clean = price_clean.replace(',', '.')
+                        
+                    try:
+                        price = float(price_clean)
+                    except ValueError:
+                        pass
 
-        return {'title': title, 'price': price}
+            return {'title': title, 'price': price}
 
     except Exception as e:
         print(f"Erro: {e}")
