@@ -48,16 +48,17 @@ def main():
             try:
                 preco_antigo = get_precos(supabase_client, id_produto)[0]
 
-                if product_data['price'] != preco_antigo['preco']:
+                if preco_antigo:
+                    if product_data['price'] != preco_antigo['preco']:
 
-                    mensagem = "📉 <b>Alteração de Preço!</b>\n\n"
-                    mensagem += f"📦 {product_data['title']}\n\n"
-                    mensagem += f"De: <s>R$ {preco_antigo:.2f}</s>\n"
-                    mensagem += f"Por: <b>R$ {product_data['price']:.2f}</b>\n"
+                        mensagem = "📉 <b>Alteração de Preço!</b>\n\n"
+                        mensagem += f"📦 {product_data['title']}\n\n"
+                        mensagem += f"De: <s>R$ {preco_antigo:.2f}</s>\n"
+                        mensagem += f"Por: <b>R$ {product_data['price']:.2f}</b>\n"
 
-                    print("Alteracao de Preco")
-                    
-                    envio_alerta(mensagem)
+                        print("Alteracao de Preco")
+                        
+                        envio_alerta(mensagem)
 
             except Exception as e:
                 print(f"ERRO: Não foi possível comparar os preços {e}")
