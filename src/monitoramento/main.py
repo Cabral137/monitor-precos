@@ -46,10 +46,11 @@ def main():
                 print(f"Falha ao encontrar o preco do item {product_data['title']}")
 
             try:
-                preco_antigo = get_precos(supabase_client, id_produto)[0]
+                
+                preco_antigo = get_precos(supabase_client, id_produto)
 
                 if preco_antigo:
-                    if product_data['price'] != preco_antigo['preco']:
+                    if product_data['price'] != preco_antigo[0]['preco']:
 
                         mensagem = "📉 <b>Alteração de Preço!</b>\n\n"
                         mensagem += f"📦 {product_data['title']}\n\n"
