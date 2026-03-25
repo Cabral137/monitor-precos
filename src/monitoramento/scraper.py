@@ -30,31 +30,16 @@ def scrape_product(url: str, config: dict, debug: bool = False):
         # Verifica se precisaremos do JSON-LD para Título ou Preço
         json_data = None
         if config.get('seletor_titulo') == "json-ld" or config.get('seletor_preco') == "json-ld":
-            scripts = soup.find_all('script', {'type': 'application/ld+json'})
-            for script in scripts:
-                if script and script.string:
-                    try:
-                        data = json.loads(script.string)
-                        # Trata se o JSON for uma lista
-                        if isinstance(data, list):
-                            for item in data:
-                                if item.get('@type') == 'Product':
-                                    json_data = item
-                                    break
-                        # Trata se o JSON for um dicionário
-                        elif isinstance(data, dict):
-                            if '@graph' in data:
-                                for item in data['@graph']:
-                                    if item.get('@type') == 'Product':
-                                        json_data = item
-                                        break
-                            elif data.get('@type') == 'Product':
-                                json_data = data
-                                
-                        if json_data:
-                            break
-                    except json.JSONDecodeError:
-                        continue
+            script_tag = soup.find('script', {'type': 'application/ld+json'})
+            if script_tag and script_tag.string:
+                try:
+                    data = json.loads(script_tag.string)
+                    if isinstance(data, list):
+                        json_data = next((item for item in data if item.get('@type') == 'Product'), data[0])
+                    else:
+                        json_data = data
+                except json.JSONDecodeError:
+                    if debug: print("  -> Erro ao decodificar JSON-LD")
 
         # --- 1. Extração do Título ---
         title = "Título não encontrado"
