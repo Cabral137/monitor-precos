@@ -18,7 +18,6 @@ def scrape_product(url: str, config: dict, debug: bool = False):
                 'url': url,
                 'render_js': config['render_js'],
                 'country': 'br',
-                'asp': True,
             },
             timeout=90
         )
