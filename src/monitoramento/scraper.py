@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import requests
 from bs4 import BeautifulSoup
@@ -17,6 +18,7 @@ def scrape_product(url: str, config: dict, debug: bool = False):
                 'url': url,
                 'render_js': config['render_js'],
                 'country': 'br',
+                'asp': True,
             },
             timeout=90
         )
@@ -65,20 +67,25 @@ def scrape_product(url: str, config: dict, debug: bool = False):
                 
         elif seletor_preco and seletor_preco != "json-ld":
             el = soup.select_one(seletor_preco)
+
             if el:
                 price_text = el.get_text(strip=True)
-                price_clean = (price_text.replace('R$', '')
-                               .replace('\xa0', '')
-                               .replace(' ', '')
-                               .replace('.', '')
-                               .replace(',', '.')
-                               .strip())
-                try:
-                    price = float(price_clean)
-                except ValueError:
-                    pass
+                
+                price_clean = re.sub(r'[^\d,.]', '', price_text)
+                
+                if price_clean:
+                    # Lógica de conversão segura
+                    if ',' in price_clean and '.' in price_clean:
+                        price_clean = price_clean.replace('.', '').replace(',', '.')
+                    elif ',' in price_clean:
+                        price_clean = price_clean.replace(',', '.')
+                        
+                    try:
+                        price = float(price_clean)
+                    except ValueError:
+                        pass
 
-        return {'title': title, 'price': price}
+            return {'title': title, 'price': price}
 
     except Exception as e:
         print(f"Erro: {e}")
