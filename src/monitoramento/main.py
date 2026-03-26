@@ -37,7 +37,7 @@ def main():
                 continue
 
             config = STORE_CONFIG[domain]
-            product_data = scrape_product(url, config, debug=True)
+            product_data = scrape_product(url, config)
 
             if product_data and product_data['price'] is not None:
                 if save_preco(supabase_client, id_produto, product_data['price']):
